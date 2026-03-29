@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dox-Share — Secure Govt Document Storage</title>
+    <link rel="stylesheet" href="css/styles.css">
+
+    <!--
+        Tesseract.js (OCR) — loaded as a regular script because the CDN
+        provides a UMD build. main.js accesses it via window.Tesseract.
+    -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+</head>
+<body>
+<div id="app">
+
+    <!-- ── Header / Nav ───────────────────────────────────────────────── -->
+    <header>
+        <div class="header-brand">
+            <span class="brand-icon">🗂️</span>
+            <h1>Dox-Share</h1>
+        </div>
+        <nav>
+            <button data-page="login">Login</button>
+            <button data-page="register">Register</button>
+            <button data-page="dashboard" id="dashboardBtn" style="display:none">Dashboard</button>
+            <button data-page="profile"   id="profileBtn"   style="display:none">Profile</button>
+            <button id="logoutBtn"                          style="display:none">Logout</button>
+        </nav>
+    </header>
+
+    <!-- ════════════════════════════════════════════════════════════════════
+         LOGIN PAGE
+    ════════════════════════════════════════════════════════════════════ -->
+    <div id="login" class="page active">
+        <div class="card auth-card">
+            <h2>Welcome back</h2>
+            <p class="subtitle">Sign in to access your documents.</p>
+            <form id="loginForm">
+                <label>Email</label>
+                <input type="email"    id="loginEmail"    placeholder="you@example.com" required>
+                <label>Password</label>
+                <input type="password" id="loginPassword" placeholder="••••••••"        required>
+                <button type="submit" class="btn-primary">Sign In</button>
+            </form>
+            <p class="switch-link">Don't have an account?
+                <a href="#" onclick="app.showPage('register'); return false;">Register</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════════
+         REGISTER PAGE
+    ════════════════════════════════════════════════════════════════════ -->
+    <div id="register" class="page">
+        <div class="card auth-card">
+            <h2>Create account</h2>
+            <p class="subtitle">Store &amp; share your government documents securely.</p>
+            <form id="registerForm">
+                <label>Name</label>
+                <input type="text"     id="regName"     placeholder="Full name">
+                <label>Email</label>
+                <input type="email"    id="regEmail"    placeholder="you@example.com" required>
+                <label>Password</label>
+                <input type="password" id="regPassword" placeholder="Min 8 characters" required>
+                <button type="submit" class="btn-primary">Create Account</button>
+            </form>
+            <p class="switch-link">Already registered?
+                <a href="#" onclick="app.showPage('login'); return false;">Sign in</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════════
+         DASHBOARD PAGE
+    ════════════════════════════════════════════════════════════════════ -->
+    <div id="dashboard" class="page">
+
+        <!-- Upload section -->
+        <section class="card">
+            <h3>📤 Upload Document</h3>
+            <p class="user-id-row">
+                Your User ID: <code id="userIdDisplay"></code>
+                <span class="tip">(share this with family members)</span>
+            </p>
+            <form id="uploadForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>File <span class="hint">(PDF, JPG, PNG)</span></label>
+                        <input type="file" id="docFile" accept=".pdf,.jpg,.jpeg,.png" required>
+                        <div id="ocrStatus" class="ocr-status"></div>
+                    </div>
+                    <div class="form-group">
+                        <label>Document Type</label>
+                        <select id="docType" required>
+                            <option value="">Select type…</option>
+                            <option value="aadhaar">Aadhaar Card</option>
+                            <option value="pan">PAN Card</option>
+                            <option value="passport">Passport</option>
+                            <option value="marksheet">Mark Sheet</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Aadhaar Number <span class="hint">(only last 4 digits stored)</span></label>
+                        <input type="text" id="aadhaarNumber" placeholder="XXXX XXXX XXXX"
+                               maxlength="14" pattern="\d{4}\s?\d{4}\s?\d{4}">
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary">Upload</button>
+            </form>
+        </section>
+
+        <!-- My Documents section -->
+        <section class="card">
+            <div class="section-header">
+                <h3>📁 My Documents</h3>
+                <input type="text" id="searchBar" class="search-bar" placeholder="Search by name or type…">
+            </div>
+            <div id="docsList" class="docs-grid"></div>
+        </section>
+
+        <!-- Shared with Me section -->
+        <section class="card">
+            <h3>🤝 Shared with Me</h3>
+            <div id="sharedDocsList" class="docs-grid"></div>
+        </section>
+
+    </div><!-- /dashboard -->
+
+    <!-- ════════════════════════════════════════════════════════════════════
+         SHARE PAGE
+    ════════════════════════════════════════════════════════════════════ -->
+    <div id="share" class="page">
+        <div class="card auth-card">
+            <h3>🔗 Share Document</h3>
+            <p class="subtitle">Enter the User ID of the person you want to share with.</p>
+            <form id="shareForm">
+                <input type="hidden" id="shareDocId">
+                <label>Recipient's User ID</label>
+                <input type="text" id="shareUserId" placeholder="Paste their User ID here" required>
+                <button type="submit" class="btn-primary">Share</button>
+                <button type="button" class="btn-secondary"
+                        onclick="app.showPage('dashboard')">Cancel</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════════
+         PROFILE PAGE
+    ════════════════════════════════════════════════════════════════════ -->
+    <div id="profile" class="page">
+        <div class="card auth-card">
+            <h3>👤 Profile</h3>
+            <div id="profileInfo"></div>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════════
+         IN-APP DOCUMENT PREVIEWER (overlay)
+    ════════════════════════════════════════════════════════════════════ -->
+    <div id="previewOverlay" class="preview-overlay">
+        <div class="preview-container">
+            <button id="closePreview" class="preview-close">✕ Close</button>
+            <iframe id="previewFrame"  class="preview-frame"  src="" title="Document Preview"></iframe>
+            <img    id="previewImage"  class="preview-image"  src="" alt="Document Preview" style="display:none">
+        </div>
+    </div>
+
+</div><!-- /app -->
+
+<script type="module" src="./js/main.js"></script>
+</body>
+</html>
